@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import Sidebar from "./componentes/sidebar";
 import AppRoutes from "./routes/AppRoutes";
 import ShaderBackground from "./componentes/ShaderBackground";
+import { useAuth } from "./contexts/useAuth";
 import "./App.css";
 
 function App() {
   const [theme, setTheme] = useState("light");
+  const { token } = useAuth();
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -34,8 +36,11 @@ function App() {
   return (
     <div className="app-layout">
       <ShaderBackground theme={theme} />
-      <Sidebar />
-      <main className="app-conteudo">
+      {token && <Sidebar />}
+      <main
+        className="app-conteudo"
+        style={{ marginLeft: token ? "220px" : "0" }}
+      >
         <AppRoutes
           theme={theme}
           toggleTheme={toggleTheme}
