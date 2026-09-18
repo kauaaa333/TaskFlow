@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../api';
 import Header from '../componentes/Header';
 import ListaTarefas from '../componentes/ListaTarefas';
 import ModalTarefa from '../componentes/ModalTarefa';
-
-const URL_API = 'https://6a85b59e9c451dc67a640568.mockapi.io/usuario';
 
 function Dashboard({ theme, onToggleTheme }) {
   const [tarefas, setTarefas] = useState([]);
@@ -25,7 +23,7 @@ function Dashboard({ theme, onToggleTheme }) {
       try {
         setCarregando(true);
         setErro('');
-        const resposta = await axios.get(URL_API);
+        const resposta = await api.get('/tarefas');
         setTarefas(resposta.data);
       } catch (e) {
         setErro('Erro ao carregar tarefas. Verifique a conexao.');
@@ -53,12 +51,14 @@ function Dashboard({ theme, onToggleTheme }) {
   }
 
   async function salvarTarefa(dados) {
+    setErro('');
+
     try {
       if (dados.id !== undefined) {
-        const { data: tarefaEditada } = await axios.put(URL_API + '/' + dados.id, dados);
+        const { data: tarefaEditada } = await api.put(`/tarefas/${dados.id}`, dados);
         setTarefas((atuais) => atuais.map((t) => (t.id === dados.id ? tarefaEditada : t)));
       } else {
-        const { data: novaTarefa } = await axios.post(URL_API, dados);
+        const { data: novaTarefa } = await api.post('/tarefas', dados);
         setTarefas((atuais) => [...atuais, novaTarefa]);
       }
     } catch (e) {
@@ -70,9 +70,11 @@ function Dashboard({ theme, onToggleTheme }) {
   async function deletarTarefa(id) {
     const confirmado = window.confirm('Tem certeza que deseja deletar esta tarefa?');
     if (!confirmado) return;
-    
+
+    setErro('');
+
     try {
-      await axios.delete(URL_API + '/' + id);
+      await api.delete(`/tarefas/${id}`);
       setTarefas((atuais) => atuais.filter((t) => t.id !== id));
     } catch (e) {
       setErro('Erro ao deletar tarefa. Tente novamente.');
@@ -81,13 +83,10 @@ function Dashboard({ theme, onToggleTheme }) {
   }
 
   async function moverTarefa(id, novaColuna) {
+    setErro('');
+
     try {
-      // Como o MockAPI bloqueia PATCH via CORS (ele só permite GET, PUT, POST, DELETE, OPTIONS),
-      // precisamos buscar a tarefa atual, atualizar a coluna e enviar via PUT.
-      const tarefaAtual = tarefas.find(t => t.id === id);
-      const tarefaAtualizada = { ...tarefaAtual, coluna: novaColuna };
-      
-      const { data: tarefaMovida } = await axios.put(URL_API + '/' + id, tarefaAtualizada);
+      const { data: tarefaMovida } = await api.put(`/tarefas/${id}`, { coluna: novaColuna });
       setTarefas((atuais) => atuais.map((t) => (t.id === id ? tarefaMovida : t)));
     } catch (e) {
       setErro('Erro ao mover tarefa. Tente novamente.');

@@ -2,27 +2,31 @@ import './Login.css';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/useAuth';
+import api from '../api';
 
 function Login() {
-  const [usuario, setUsuario] = useState('');
+  const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
   const [shake, setShake] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleLogin = (event) => {
+  const handleLogin = async (event) => {
     event.preventDefault();
+    setErro('');
 
-    if (usuario === 'admin' && senha === '1234') {
-      login();
+    try {
+      const resposta = await api.post('/auth/login', { email, senha });
+      const { token, usuario } = resposta.data;
+
+      login(usuario, token);
       navigate('/', { replace: true });
-      return;
+    } catch (err) {
+      setErro(err.response?.data?.erro || 'Erro ao fazer login');
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
     }
-
-    setErro('Usuário ou senha incorretos');
-    setShake(true);
-    setTimeout(() => setShake(false), 500);
   };
 
   return (
@@ -33,10 +37,10 @@ function Login() {
 
         <input
           className="login-input"
-          type="text"
-          placeholder="Usuário"
-          value={usuario}
-          onChange={(event) => setUsuario(event.target.value)}
+          type="email"
+          placeholder="E-mail"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
           autoComplete="username"
         />
         <input
@@ -51,7 +55,7 @@ function Login() {
         {erro && <p className="login-erro" role="alert">{erro}</p>}
 
         <button className="login-btn" type="submit">Entrar</button>
-        <p className="login-aviso">Login didático: use admin / 1234.</p>
+        <p className="login-aviso">Login didático: use alice@email.com / 123456.</p>
       </form>
     </div>
   );

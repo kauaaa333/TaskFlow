@@ -92,8 +92,16 @@
   gap: 8px;
 }
 
-.btnLogout {
+.usuario {
   margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+.btnLogout {
   color: var(--text);
   background: transparent;
   border: 1px solid var(--border);
