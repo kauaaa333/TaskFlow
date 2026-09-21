@@ -37,10 +37,7 @@ function App() {
     <div className="app-layout">
       <ShaderBackground theme={theme} />
       {token && <Sidebar />}
-      <main
-        className="app-conteudo"
-        style={{ marginLeft: token ? "220px" : "0" }}
-      >
+      <main className="app-conteudo">
         <AppRoutes
           theme={theme}
           toggleTheme={toggleTheme}
