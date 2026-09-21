@@ -62,7 +62,7 @@ function Dashboard({ theme, onToggleTheme }) {
         setTarefas((atuais) => [...atuais, novaTarefa]);
       }
     } catch (e) {
-      setErro('Erro ao salvar tarefa.');
+      setErro(e.response?.data?.erro || 'Erro ao salvar tarefa.');
       console.error(e);
     }
   }
@@ -89,7 +89,7 @@ function Dashboard({ theme, onToggleTheme }) {
       const { data: tarefaMovida } = await api.put(`/tarefas/${id}`, { coluna: novaColuna });
       setTarefas((atuais) => atuais.map((t) => (t.id === id ? tarefaMovida : t)));
     } catch (e) {
-      setErro('Erro ao mover tarefa. Tente novamente.');
+      setErro(e.response?.data?.erro || 'Erro ao mover tarefa. Tente novamente.');
       console.error(e);
     }
   }
