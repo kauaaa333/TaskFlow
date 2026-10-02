@@ -22,7 +22,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (resposta) => resposta,
   (erro) => {
-    if (erro.response?.status === 401) {
+    const eLogin = erro.config?.url?.includes('/auth/login');
+
+    if (erro.response?.status === 401 && !eLogin) {
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
