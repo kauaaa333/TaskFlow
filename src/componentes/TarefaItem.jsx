@@ -1,11 +1,12 @@
 import styles from "./TarefaItem.module.css";
+import { rotuloPrioridade } from "../prioridades";
 
 function TarefaItem({
   id,
   texto,
   coluna,
   moverTarefa,
-  prioridade = "media",
+  prioridade,
   cidade,
   onDeletar,
   onEditar,
@@ -14,8 +15,7 @@ function TarefaItem({
 
   const classeItem =
     (isConcluida ? styles.tarefa + " " + styles.concluida : styles.tarefa) +
-    " " +
-    styles[prioridade];
+    (prioridade ? " " + styles[prioridade] : "");
 
   const classeTexto = isConcluida
     ? styles.textoTarefa + " " + styles["texto-tarefa"]
@@ -33,7 +33,7 @@ function TarefaItem({
 
         <div className={styles.badges}>
           {cidade && <span className={styles["badge-cidade"]}>📍 {cidade}</span>}
-          <span className={classePrioridade}>{prioridade}</span>
+          {prioridade && <span className={classePrioridade}>{rotuloPrioridade(prioridade)}</span>}
         </div>
       </div>
 

@@ -3,11 +3,29 @@ import api from '../api';
 import Header from '../componentes/Header';
 import ListaTarefas from '../componentes/ListaTarefas';
 import ModalTarefa from '../componentes/ModalTarefa';
+import { useAuth } from '../contexts/useAuth';
+import { ordenarPorImportancia, PRIORIDADES_RESERVA, rotuloPrioridade } from '../prioridades';
+
+const LIMITE_ANDAMENTO = 2;
+const MSG_LIMITE = `Limite de ${LIMITE_ANDAMENTO} tarefas em andamento atingido`;
+
+function idDoToken(token) {
+  try {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(base64)).id ?? null;
+  } catch {
+    return null;
+  }
+}
 
 function Dashboard({ theme, onToggleTheme }) {
   const [tarefas, setTarefas] = useState([]);
+  const [prioridades, setPrioridades] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
+  const [falhaCarregamento, setFalhaCarregamento] = useState(false);
+  const { token } = useAuth();
+  const usuarioId = idDoToken(token);
 
   const [modalAberto, setModalAberto] = useState(false);
   const [tarefaEditando, setTarefaEditando] = useState(null);
@@ -17,15 +35,30 @@ function Dashboard({ theme, onToggleTheme }) {
   const total = tarefas.length;
   const pendentes = tarefas.filter((tarefa) => tarefa.coluna === 'afazer').length;
   const concluidas = tarefas.filter((tarefa) => tarefa.coluna === 'concluido').length;
+  const emAndamento = tarefas.filter((tarefa) => tarefa.coluna === 'andamento').length;
 
   useEffect(() => {
     async function carregarTarefas() {
       try {
         setCarregando(true);
         setErro('');
-        const resposta = await api.get('/tarefas');
-        setTarefas(resposta.data);
+        setFalhaCarregamento(false);
+        // allSettled: se só as prioridades falharem, as tarefas continuam aparecendo
+        const [respostaTarefas, respostaPrioridades] = await Promise.allSettled([
+          api.get('/tarefas', { params: usuarioId ? { usuarioId } : undefined }),
+          api.get('/prioridades'),
+        ]);
+        if (respostaTarefas.status === 'rejected') throw respostaTarefas.reason;
+        setTarefas(respostaTarefas.value.data);
+
+        if (respostaPrioridades.status === 'fulfilled') {
+          setPrioridades(ordenarPorImportancia(respostaPrioridades.value.data));
+        } else {
+          console.warn('GET /prioridades falhou; usando a lista padrão', respostaPrioridades.reason);
+          setPrioridades(ordenarPorImportancia(PRIORIDADES_RESERVA));
+        }
       } catch (e) {
+        setFalhaCarregamento(true);
         setErro('Erro ao carregar tarefas. Verifique a conexao.');
         console.error(e);
       } finally {
@@ -33,7 +66,7 @@ function Dashboard({ theme, onToggleTheme }) {
       }
     }
     carregarTarefas();
-  }, []);
+  }, [usuarioId]);
 
   useEffect(() => {
     document.title = pendentes > 0 ? `(${pendentes}) TaskFlow` : 'TaskFlow';
@@ -52,6 +85,11 @@ function Dashboard({ theme, onToggleTheme }) {
 
   async function salvarTarefa(dados) {
     setErro('');
+
+    if (dados.id === undefined && dados.coluna === 'andamento' && emAndamento >= LIMITE_ANDAMENTO) {
+      setErro(MSG_LIMITE);
+      return;
+    }
 
     try {
       if (dados.id !== undefined) {
@@ -85,6 +123,11 @@ function Dashboard({ theme, onToggleTheme }) {
   async function moverTarefa(id, novaColuna) {
     setErro('');
 
+    if (novaColuna === 'andamento' && emAndamento >= LIMITE_ANDAMENTO) {
+      setErro(MSG_LIMITE);
+      return;
+    }
+
     try {
       const { data: tarefaMovida } = await api.put(`/tarefas/${id}`, { coluna: novaColuna });
       setTarefas((atuais) => atuais.map((t) => (t.id === id ? tarefaMovida : t)));
@@ -94,8 +137,10 @@ function Dashboard({ theme, onToggleTheme }) {
     }
   }
 
+  const prioridadePorId = Object.fromEntries(prioridades.map((p) => [p.id, p]));
+
   const tarefasFiltradas = tarefas.filter((tarefa) => (
-    filtroPrioridade === 'todas' || tarefa.prioridade === filtroPrioridade
+    filtroPrioridade === 'todas' || String(tarefa.idprioridade) === filtroPrioridade
   ));
 
   const colunas = [
@@ -112,9 +157,9 @@ function Dashboard({ theme, onToggleTheme }) {
           <label htmlFor="filtro-prioridade">Filtrar por prioridade:</label>
           <select id="filtro-prioridade" value={filtroPrioridade} onChange={(event) => setFiltroPrioridade(event.target.value)}>
             <option value="todas">Todas</option>
-            <option value="alta">Alta</option>
-            <option value="media">Média</option>
-            <option value="baixa">Baixa</option>
+            {prioridades.map((p) => (
+              <option key={p.id} value={p.id}>{rotuloPrioridade(p.descricao)}</option>
+            ))}
           </select>
         </div>
 
@@ -122,7 +167,7 @@ function Dashboard({ theme, onToggleTheme }) {
         
         {erro && (<p style={{ textAlign: 'center', color: 'var(--danger)', padding: '2rem' }}>{erro}</p>)}
 
-        {!carregando && !erro && (
+        {!carregando && !falhaCarregamento && (
           <div className="kanban">
             {colunas.map((coluna) => {
               const tarefasDaColuna = tarefas.filter((tarefa) => tarefa.coluna === coluna.id);
@@ -137,14 +182,14 @@ function Dashboard({ theme, onToggleTheme }) {
                       <button className="kanban-btn-add" type="button" onClick={() => abrirModalCriar(coluna.id)} aria-label={`Adicionar tarefa em ${coluna.titulo}`}>+</button>
                     </div>
                   </div>
-                  <ListaTarefas tarefas={tarefasVisiveis} onDeletar={deletarTarefa} onEditar={abrirModalEditar} moverTarefa={moverTarefa} />
+                  <ListaTarefas tarefas={tarefasVisiveis} prioridadePorId={prioridadePorId} onDeletar={deletarTarefa} onEditar={abrirModalEditar} moverTarefa={moverTarefa} />
                 </div>
               );
             })}
           </div>
         )}
       </div>
-      <ModalTarefa aberto={modalAberto} onFechar={() => setModalAberto(false)} onSalvar={salvarTarefa} tarefa={tarefaEditando} coluna={colunaAtiva} />
+      <ModalTarefa aberto={modalAberto} onFechar={() => setModalAberto(false)} onSalvar={salvarTarefa} tarefa={tarefaEditando} coluna={colunaAtiva} prioridades={prioridades} />
     </>
   );
 }

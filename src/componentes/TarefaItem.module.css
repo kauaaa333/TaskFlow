@@ -92,6 +92,18 @@
   border: 1px solid #226638;
 }
 
+.badge-urgente {
+  background-color: #4a0e2e;
+  color: #ff5fa2;
+  border: 1px solid #8a1d55;
+}
+
+.badge-baixissima {
+  background-color: #1c2430;
+  color: #8fa3bf;
+  border: 1px solid #334155;
+}
+
 /* Área de botões de ação */
 .acoes {
   display: flex;

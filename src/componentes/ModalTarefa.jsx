@@ -1,27 +1,28 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import styles from './ModalTarefa.module.css';
+import { PRIORIDADE_PADRAO, prioridadeMaisProxima, rotuloPrioridade } from '../prioridades';
 
 // O efeito sincroniza o formulário com a tarefa selecionada para edição.
 /* eslint-disable react-hooks/set-state-in-effect */
 
-function ModalTarefa({ aberto, onFechar, onSalvar, tarefa = null, coluna = 'afazer' }) {
+function ModalTarefa({ aberto, onFechar, onSalvar, tarefa = null, coluna = 'afazer', prioridades = [] }) {
   const [texto, setTexto] = useState('');
   const [cep, setCep] = useState('');
   const [cidade, setCidade] = useState('');
-  const [prioridade, setPrioridade] = useState('media');
+  const [idprioridade, setIdprioridade] = useState(PRIORIDADE_PADRAO);
 
   useEffect(() => {
     if (tarefa) {
       setTexto(tarefa.texto || '');
       setCep(tarefa.cep || '');
       setCidade(tarefa.cidade || '');
-      setPrioridade(tarefa.prioridade || 'media');
+      setIdprioridade(tarefa.idprioridade ?? PRIORIDADE_PADRAO);
     } else {
       setTexto('');
       setCep('');
       setCidade('');
-      setPrioridade('media');
+      setIdprioridade(PRIORIDADE_PADRAO);
     }
   }, [tarefa, aberto]);
   /* eslint-enable react-hooks/set-state-in-effect */
@@ -49,6 +50,14 @@ function ModalTarefa({ aberto, onFechar, onSalvar, tarefa = null, coluna = 'afaz
     }
   }
 
+  // Só prioridades ativas; na edição, mantém a atual mesmo que tenha sido desativada
+  const opcoesPrioridade = prioridades.filter((p) => p.ativo || p.id === tarefa?.idprioridade);
+  // Se a escolhida não está nas opções (ex.: 'media' desativada), usa a ativa mais próxima do padrão:
+  // o que aparece no select é sempre o que é enviado
+  const valorPrioridade = opcoesPrioridade.some((p) => p.id === idprioridade)
+    ? idprioridade
+    : (prioridadeMaisProxima(opcoesPrioridade, PRIORIDADE_PADRAO)?.id ?? idprioridade);
+
   function handleSalvar(event) {
     event.preventDefault();
     if (!texto.trim()) return;
@@ -58,7 +67,7 @@ function ModalTarefa({ aberto, onFechar, onSalvar, tarefa = null, coluna = 'afaz
       texto: texto.trim(),
       cep: cep.replace(/\D/g, ''),
       cidade,
-      prioridade,
+      idprioridade: valorPrioridade,
       coluna: tarefa?.coluna || coluna,
     });
     onFechar();
@@ -83,10 +92,10 @@ function ModalTarefa({ aberto, onFechar, onSalvar, tarefa = null, coluna = 'afaz
           }}
         />
         {cidade && <p className={styles.cidade}>{cidade}</p>}
-        <select value={prioridade} onChange={(event) => setPrioridade(event.target.value)}>
-          <option value="alta">Alta</option>
-          <option value="media">Média</option>
-          <option value="baixa">Baixa</option>
+        <select value={valorPrioridade} onChange={(event) => setIdprioridade(Number(event.target.value))}>
+          {opcoesPrioridade.map((p) => (
+            <option key={p.id} value={p.id}>{rotuloPrioridade(p.descricao)}</option>
+          ))}
         </select>
         <div className={styles.botoes}>
           <button type="button" onClick={onFechar}>Cancelar</button>
