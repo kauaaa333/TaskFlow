@@ -6,8 +6,12 @@ import ModalTarefa from '../componentes/ModalTarefa';
 import ModalExcluirTarefa from '../componentes/ModalExcluirTarefa';
 import { cadastrarProjeto } from '../projetos';
 import { ordenarPorImportancia, rotuloPrioridade } from '../prioridades';
+import { useAuth } from '../contexts/useAuth';
+import { filtrarTarefas, contarTarefas } from '../filtrosTarefas';
 
 function Dashboard({ theme, onToggleTheme }) {
+  const { usuario } = useAuth();
+  const administrador = usuario?.administrador === true;
   const [tarefas, setTarefas] = useState([]);
   const [prioridades, setPrioridades] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
@@ -20,12 +24,14 @@ function Dashboard({ theme, onToggleTheme }) {
   const [tarefaEditando, setTarefaEditando] = useState(null);
   const [colunaAtiva, setColunaAtiva] = useState('afazer');
   const [filtroPrioridade, setFiltroPrioridade] = useState('todas');
+  const [filtroUsuario, setFiltroUsuario] = useState('todos');
   const [tarefaParaExcluir, setTarefaParaExcluir] = useState(null);
   const [excluindo, setExcluindo] = useState(false);
 
-  const total = tarefas.length;
-  const pendentes = tarefas.filter((tarefa) => tarefa.coluna === 'afazer').length;
-  const concluidas = tarefas.filter((tarefa) => tarefa.coluna === 'concluido').length;
+  const tarefasFiltradas = filtrarTarefas(tarefas, {
+    prioridade: filtroPrioridade, usuarioId: filtroUsuario, administrador,
+  });
+  const { total, pendentes, concluidas } = contarTarefas(tarefasFiltradas);
 
   useEffect(() => {
     let ativo = true;
@@ -132,10 +138,6 @@ function Dashboard({ theme, onToggleTheme }) {
   const usuarioPorId = Object.fromEntries(usuarios.map((u) => [u.id, u]));
   const projetoPorId = Object.fromEntries(projetos.map((p) => [p.id, p]));
 
-  const tarefasFiltradas = tarefas.filter((tarefa) => (
-    filtroPrioridade === 'todas' || String(tarefa.idprioridade) === filtroPrioridade
-  ));
-
   const colunas = [
     { id: 'afazer', titulo: 'A Fazer', proxima: 'andamento' },
     { id: 'andamento', titulo: 'Em Andamento', anterior: 'afazer', proxima: 'concluido' },
@@ -146,6 +148,7 @@ function Dashboard({ theme, onToggleTheme }) {
     <>
       <Header titulo="TaskFlow" subtitulo="Gerencie suas tarefas" total={total} pendentes={pendentes} concluidas={concluidas} theme={theme} onToggleTheme={onToggleTheme} />
       <div className="container dashboard-container">
+        <div className="filtros-tarefas">
         <div className="filtro-prioridade">
           <label htmlFor="filtro-prioridade">Filtrar por prioridade:</label>
           <select id="filtro-prioridade" value={filtroPrioridade} onChange={(event) => setFiltroPrioridade(event.target.value)}>
@@ -155,6 +158,16 @@ function Dashboard({ theme, onToggleTheme }) {
             ))}
           </select>
         </div>
+        {administrador && <div className="filtro-prioridade">
+          <label htmlFor="filtro-usuario">Filtrar por usuário:</label>
+          <select id="filtro-usuario" value={filtroUsuario} onChange={(event) => setFiltroUsuario(event.target.value)}>
+            <option value="todos">Todos os usuários</option>
+            {[...usuarios].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR') || a.id - b.id).map(u => (
+              <option key={u.id} value={u.id}>{u.nome} — {u.email}</option>
+            ))}
+          </select>
+        </div>}
+        </div>
 
         {carregando && (<p style={{ textAlign: 'center', color: 'var(--text-dim)', padding: '2rem' }}>Carregando tarefas...</p>)}
         
@@ -163,7 +176,6 @@ function Dashboard({ theme, onToggleTheme }) {
         {!carregando && !falhaCarregamento && (
           <div className="kanban">
             {colunas.map((coluna) => {
-              const tarefasDaColuna = tarefas.filter((tarefa) => tarefa.coluna === coluna.id);
               const tarefasVisiveis = tarefasFiltradas.filter((tarefa) => tarefa.coluna === coluna.id);
 
               return (
@@ -171,7 +183,7 @@ function Dashboard({ theme, onToggleTheme }) {
                   <div className="kanban-coluna-header">
                     <h2>{coluna.titulo}</h2>
                     <div className="kanban-coluna-controles">
-                      <span className="kanban-contador">{tarefasDaColuna.length}</span>
+                      <span className="kanban-contador">{tarefasVisiveis.length}</span>
                       <button className="kanban-btn-add" type="button" onClick={() => abrirModalCriar(coluna.id)} aria-label={`Adicionar tarefa em ${coluna.titulo}`}>+</button>
                     </div>
                   </div>

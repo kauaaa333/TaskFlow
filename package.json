@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "test": "node --test test/errosApi.test.js test/producao.test.js test/projetos.test.js",
+    "test": "node --test test/errosApi.test.js test/producao.test.js test/projetos.test.js test/filtrosTarefas.test.js",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",

@@ -105,16 +105,19 @@ select:focus-visible {
 
 .dashboard-container { padding-top: 20px; }
 
+.filtros-tarefas { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-bottom: 18px; }
 .filtro-prioridade {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 18px;
+  flex-wrap: wrap;
+  min-width: 0;
   color: var(--text-dim);
   font-size: 0.9rem;
 }
 
 .filtro-prioridade select {
+  max-width: 100%;
   color: var(--text);
   background: var(--bg-elevated-2);
   border: 1px solid var(--border);
