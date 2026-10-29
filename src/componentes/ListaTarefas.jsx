@@ -1,6 +1,6 @@
 import TarefaItem from './TarefaItem';
 
-function ListaTarefas({ tarefas, prioridadePorId = {}, onDeletar, onEditar, moverTarefa }) {
+function ListaTarefas({ tarefas, prioridadePorId = {}, usuarioPorId = {}, projetoPorId = {}, onDeletar, onEditar, moverTarefa }) {
   return (
     <section id='lista-section'>
       {/* Mensagem quando nao ha tarefas */}
@@ -18,7 +18,8 @@ function ListaTarefas({ tarefas, prioridadePorId = {}, onDeletar, onEditar, move
               texto={tarefa.texto}
               prioridade={prioridadePorId[tarefa.idprioridade]?.descricao}
               coluna={tarefa.coluna}
-              cidade={tarefa.cidade} /* <-- PROP ADICIONADA AQUI */
+              responsavel={tarefa.usuario ?? usuarioPorId[tarefa.usuarioId]?.nome}
+              projeto={tarefa.projeto ?? projetoPorId[tarefa.projetoId]?.nome}
               moverTarefa={moverTarefa}
               id={tarefa.id}
               onDeletar={() => onDeletar(tarefa.id)}

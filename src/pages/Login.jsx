@@ -2,19 +2,22 @@ import './Login.css';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/useAuth';
-import api from '../api';
+import api, { mensagensDeErro } from '../api';
 
 function Login() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
   const [shake, setShake] = useState(false);
+  const [enviando, setEnviando] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
   const handleLogin = async (event) => {
     event.preventDefault();
+    if (enviando) return;
     setErro('');
+    setEnviando(true);
 
     try {
       const resposta = await api.post('/auth/login', { email, senha });
@@ -23,9 +26,11 @@ function Login() {
       login(usuario, token);
       navigate('/', { replace: true });
     } catch (err) {
-      setErro(err.response?.data?.erro || 'Erro ao fazer login');
+      setErro(mensagensDeErro(err).join(' '));
       setShake(true);
       setTimeout(() => setShake(false), 500);
+    } finally {
+      setEnviando(false);
     }
   };
 
@@ -42,6 +47,8 @@ function Login() {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           autoComplete="username"
+          required
+          aria-label="E-mail"
         />
         <input
           className="login-input"
@@ -50,12 +57,14 @@ function Login() {
           value={senha}
           onChange={(event) => setSenha(event.target.value)}
           autoComplete="current-password"
+          required
+          aria-label="Senha"
         />
 
         {erro && <p className="login-erro" role="alert">{erro}</p>}
 
-        <button className="login-btn" type="submit">Entrar</button>
-        <p className="login-aviso">Login didático: use alice@email.com / 123456.</p>
+        <button className="login-btn" type="submit" disabled={enviando}>{enviando ? 'Entrando...' : 'Entrar'}</button>
+        <p className="login-aviso">Use sua conta cadastrada. Para solicitar acesso, procure o administrador.</p>
       </form>
     </div>
   );

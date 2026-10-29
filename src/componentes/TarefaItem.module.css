@@ -21,6 +21,13 @@
   box-shadow: 0 4px 16px var(--border);
 }
 
+.tarefa.alta { border-left: 4px solid #ef4444; }
+.tarefa.media { border-left: 4px solid #eab308; }
+.tarefa.baixa { border-left: 4px solid #10b981; }
+.tarefa.urgente { border-left: 4px solid #ec4899; }
+.tarefa.baixissima { border-left: 4px solid #64748b; }
+.responsavel { color: var(--text-dim); font-size: 0.8rem; }
+
 /* Área de conteúdo do card */
 .conteudo {
   display: flex;
@@ -36,7 +43,7 @@
   line-height: 1.4;
 }
 
-/* Badges (cidade, prioridade) */
+/* Responsável e prioridade */
 .badges {
   display: flex;
   align-items: center;
@@ -49,18 +56,6 @@
 .texto-tarefa {
   text-decoration: line-through;
   color: var(--text-faint);
-}
-
-/* Tags de Cidade e Prioridade */
-.badge-cidade {
-  font-size: 0.75rem;
-  color: #e0e0e0;
-  background-color: #262626;
-  border: 1px solid #444444;
-  padding: 3px 6px;
-  border-radius: 4px;
-  white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .badge-prioridade {
