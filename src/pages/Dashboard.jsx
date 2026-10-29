@@ -11,10 +11,11 @@ import { filtrarTarefas, contarTarefas } from '../filtrosTarefas';
 
 function Dashboard({ theme, onToggleTheme }) {
   const { usuario } = useAuth();
-  const administrador = usuario?.administrador === true;
   const [tarefas, setTarefas] = useState([]);
   const [prioridades, setPrioridades] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
+  // O login guarda somente id/nome. O perfil confirmado vem da API autenticada.
+  const administrador = usuarios.find(u => u.id === usuario?.id)?.administrador === true;
   const [projetos, setProjetos] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
