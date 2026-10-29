@@ -4,6 +4,7 @@ import Header from '../componentes/Header';
 import ListaTarefas from '../componentes/ListaTarefas';
 import ModalTarefa from '../componentes/ModalTarefa';
 import ModalExcluirTarefa from '../componentes/ModalExcluirTarefa';
+import { cadastrarProjeto } from '../projetos';
 import { ordenarPorImportancia, rotuloPrioridade } from '../prioridades';
 
 function Dashboard({ theme, onToggleTheme }) {
@@ -84,6 +85,12 @@ function Dashboard({ theme, onToggleTheme }) {
         const { data: novaTarefa } = await api.post('/tarefas', dados);
         setTarefas((atuais) => [...atuais, novaTarefa]);
     }
+  }
+
+  async function criarProjeto(nome) {
+    const projeto = await cadastrarProjeto(api, nome);
+    setProjetos((atuais) => [...atuais, projeto]);
+    return projeto;
   }
 
   function deletarTarefa(id) {
@@ -175,7 +182,7 @@ function Dashboard({ theme, onToggleTheme }) {
           </div>
         )}
       </div>
-      <ModalTarefa aberto={modalAberto} onFechar={() => setModalAberto(false)} onSalvar={salvarTarefa} tarefa={tarefaEditando} coluna={colunaAtiva} prioridades={prioridades} usuarios={usuarios} projetos={projetos} />
+      {modalAberto && <ModalTarefa aberto onFechar={() => setModalAberto(false)} onSalvar={salvarTarefa} onCriarProjeto={criarProjeto} tarefa={tarefaEditando} coluna={colunaAtiva} prioridades={prioridades} usuarios={usuarios} projetos={projetos} />}
       <ModalExcluirTarefa tarefa={tarefaParaExcluir} excluindo={excluindo} erro={erro} onCancelar={() => { if (!excluindo) setTarefaParaExcluir(null); }} onConfirmar={confirmarExclusao} />
     </>
   );

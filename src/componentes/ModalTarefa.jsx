@@ -8,32 +8,29 @@ function paraNumero(valor) {
   return valor === '' || valor == null ? null : Number(valor);
 }
 
-function ModalTarefa({ aberto, onFechar, onSalvar, tarefa = null, coluna = 'afazer', prioridades, usuarios, projetos }) {
+function ModalTarefa({ aberto, onFechar, onSalvar, onCriarProjeto, tarefa = null, coluna = 'afazer', prioridades, usuarios, projetos }) {
   const { usuario } = useAuth();
-  const [texto, setTexto] = useState('');
-  const [idUsuario, setIdUsuario] = useState('');
-  const [idProjeto, setIdProjeto] = useState('');
+  // O Dashboard monta um formulário novo a cada abertura. Atualizar a lista de
+  // projetos não pode reinicializar os dados já digitados na tarefa.
+  const responsavelInicial = tarefa ? tarefa.usuarioId ?? '' : usuario?.id || usuarios[0]?.id || '';
+  const [texto, setTexto] = useState(tarefa?.texto ?? '');
+  const [idUsuario, setIdUsuario] = useState(responsavelInicial);
+  const [idProjeto, setIdProjeto] = useState(tarefa ? tarefa.projetoId ?? ''
+    : projetos.find((p) => p.usuarioId === Number(responsavelInicial))?.id ?? '');
   const [erros, setErros] = useState([]);
-  const [idprioridade, setIdprioridade] = useState(PRIORIDADE_PADRAO);
+  const [idprioridade, setIdprioridade] = useState(tarefa?.idprioridade
+    ?? prioridadeMaisProxima(prioridades, PRIORIDADE_PADRAO)?.id ?? '');
   const [salvando, setSalvando] = useState(false);
-
-  // Sincroniza o formulário ao abrir ou selecionar outra tarefa.
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (!aberto) return;
-    setErros([]);
-    setTexto(tarefa?.texto ?? '');
-    setIdprioridade(tarefa?.idprioridade
-      ?? prioridadeMaisProxima(prioridades, PRIORIDADE_PADRAO)?.id ?? '');
-    const responsavel = tarefa ? tarefa.usuarioId ?? '' : usuario?.id || usuarios[0]?.id || '';
-    setIdUsuario(responsavel);
-    setIdProjeto(tarefa ? tarefa.projetoId ?? ''
-      : projetos.find((p) => p.usuarioId === Number(responsavel))?.id ?? '');
-  }, [tarefa, aberto, usuario?.id, usuarios, projetos, prioridades]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+  const [novoProjetoAberto, setNovoProjetoAberto] = useState(false);
+  const [nomeProjeto, setNomeProjeto] = useState('');
+  const [criandoProjeto, setCriandoProjeto] = useState(false);
+  const [errosProjeto, setErrosProjeto] = useState([]);
+  const [avisoProjeto, setAvisoProjeto] = useState('');
+  const ocupado = salvando || criandoProjeto;
+  const podeCriarProjeto = Number(idUsuario) === usuario?.id;
 
   useEffect(() => {
-    if (!aberto || salvando) return undefined;
+    if (!aberto || ocupado) return undefined;
 
     function handleEsc(event) {
       if (event.key === 'Escape') onFechar();
@@ -41,11 +38,36 @@ function ModalTarefa({ aberto, onFechar, onSalvar, tarefa = null, coluna = 'afaz
 
     document.addEventListener('keydown', handleEsc);
     return () => document.removeEventListener('keydown', handleEsc);
-  }, [aberto, onFechar, salvando]);
+  }, [aberto, onFechar, ocupado]);
 
   function trocarResponsavel(valor) {
     setIdUsuario(valor);
     setIdProjeto(projetos.find((p) => p.usuarioId === Number(valor))?.id ?? '');
+    setNovoProjetoAberto(false);
+    setNomeProjeto('');
+    setErrosProjeto([]);
+    setAvisoProjeto('');
+  }
+
+  async function criarProjeto() {
+    if (ocupado || !podeCriarProjeto) return;
+    if (!nomeProjeto.trim() || nomeProjeto.trim().length > 100) {
+      setErrosProjeto(['Informe um nome de projeto com até 100 caracteres.']);
+      return;
+    }
+    setCriandoProjeto(true);
+    setErrosProjeto([]);
+    try {
+      const projeto = await onCriarProjeto(nomeProjeto);
+      setIdProjeto(projeto.id);
+      setNovoProjetoAberto(false);
+      setNomeProjeto('');
+      setAvisoProjeto('Projeto criado e selecionado. Ele permanece cadastrado mesmo se você cancelar a tarefa.');
+    } catch (e) {
+      setErrosProjeto(mensagensDeErro(e));
+    } finally {
+      setCriandoProjeto(false);
+    }
   }
 
   // Só prioridades ativas; na edição, mantém a atual mesmo que tenha sido desativada
@@ -62,7 +84,7 @@ function ModalTarefa({ aberto, onFechar, onSalvar, tarefa = null, coluna = 'afaz
 
   async function handleSalvar(event) {
     event.preventDefault();
-    if (salvando) return;
+    if (ocupado || novoProjetoAberto) return;
 
     setErros([]);
     setSalvando(true);
@@ -87,31 +109,44 @@ function ModalTarefa({ aberto, onFechar, onSalvar, tarefa = null, coluna = 'afaz
   if (!aberto) return null;
 
   return (
-    <div className={styles.overlay} onClick={salvando ? undefined : onFechar}>
-      <form className={styles.card} role="dialog" aria-modal="true" aria-labelledby="titulo-modal-tarefa" onClick={(event) => event.stopPropagation()} onSubmit={handleSalvar} aria-busy={salvando} noValidate>
-        <button type="button" className={styles.fechar} onClick={onFechar} aria-label="Fechar modal" disabled={salvando}>×</button>
+    <div className={styles.overlay} onClick={ocupado ? undefined : onFechar}>
+      <form className={styles.card} role="dialog" aria-modal="true" aria-labelledby="titulo-modal-tarefa" onClick={(event) => event.stopPropagation()} onSubmit={handleSalvar} aria-busy={ocupado} noValidate>
+        <button type="button" className={styles.fechar} onClick={onFechar} aria-label="Fechar modal" disabled={ocupado}>×</button>
         <h2 id="titulo-modal-tarefa">{tarefa ? 'Editar tarefa' : 'Nova tarefa'}</h2>
         <div className={styles.campo}>
           <label htmlFor="tarefa-texto">Tarefa</label>
-          <input id="tarefa-texto" placeholder="Descreva a tarefa" value={texto} onChange={(event) => setTexto(event.target.value)} disabled={salvando} autoFocus />
+          <input id="tarefa-texto" placeholder="Descreva a tarefa" value={texto} onChange={(event) => setTexto(event.target.value)} disabled={ocupado} autoFocus />
         </div>
         <div className={styles.campo}>
           <label htmlFor="tarefa-responsavel">Responsável</label>
-          <select id="tarefa-responsavel" value={idUsuario} onChange={(event) => trocarResponsavel(event.target.value)} disabled={salvando}>
+          <select id="tarefa-responsavel" value={idUsuario} onChange={(event) => trocarResponsavel(event.target.value)} disabled={ocupado}>
             <option value="">Selecione um responsável</option>
             {usuarios.map((u) => <option key={u.id} value={u.id}>{u.nome}</option>)}
           </select>
         </div>
         <div className={styles.campo}>
           <label htmlFor="tarefa-projeto">Projeto</label>
-          <select id="tarefa-projeto" value={idProjeto} onChange={(event) => setIdProjeto(event.target.value)} disabled={salvando}>
+          <select id="tarefa-projeto" value={idProjeto} onChange={(event) => setIdProjeto(event.target.value)} disabled={ocupado}>
             <option value="">Sem projeto</option>
             {projetosDoResponsavel.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
           </select>
+          {podeCriarProjeto && !novoProjetoAberto && <button type="button" onClick={() => { setNovoProjetoAberto(true); setAvisoProjeto(''); setErrosProjeto([]); }} disabled={ocupado}>+ Novo projeto</button>}
+          {!podeCriarProjeto && <small>Para criar um projeto, selecione sua própria conta como responsável.</small>}
+          {novoProjetoAberto && <fieldset className={styles.novoProjeto} disabled={ocupado}>
+            <legend>Novo projeto</legend>
+            <label htmlFor="novo-projeto-nome">Nome do projeto</label>
+            <input id="novo-projeto-nome" value={nomeProjeto} maxLength={100} onChange={(event) => setNomeProjeto(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); criarProjeto(); } }} />
+            {errosProjeto.length > 0 && <ul role="alert" className={styles.erros}>{errosProjeto.map((mensagem, i) => <li key={i}>{mensagem}</li>)}</ul>}
+            <div className={styles.botoes}>
+              <button type="button" onClick={() => { setNovoProjetoAberto(false); setNomeProjeto(''); setErrosProjeto([]); }}>Cancelar novo projeto</button>
+              <button type="button" onClick={criarProjeto}>{criandoProjeto ? 'Criando...' : 'Criar projeto'}</button>
+            </div>
+          </fieldset>}
+          {avisoProjeto && <small role="status">{avisoProjeto}</small>}
         </div>
         <div className={styles.campo}>
         <label htmlFor="tarefa-prioridade">Prioridade</label>
-        <select id="tarefa-prioridade" disabled={salvando} value={valorPrioridade} onChange={(event) => setIdprioridade(Number(event.target.value))}>
+        <select id="tarefa-prioridade" disabled={ocupado} value={valorPrioridade} onChange={(event) => setIdprioridade(Number(event.target.value))}>
           {!prioridades.length && !prioridadeAtualInativa && <option value="">Nenhuma prioridade ativa</option>}
           {prioridadeAtualInativa && <option value={tarefa.idprioridade}>Prioridade atual (inativa)</option>}
           {opcoesPrioridade.map((p) => (
@@ -121,8 +156,8 @@ function ModalTarefa({ aberto, onFechar, onSalvar, tarefa = null, coluna = 'afaz
         </div>
         {erros.length > 0 && <ul role="alert" className={styles.erros}>{erros.map((mensagem, i) => <li key={i}>{mensagem}</li>)}</ul>}
         <div className={styles.botoes}>
-          <button type="button" onClick={onFechar} disabled={salvando}>Cancelar</button>
-          <button type="submit" disabled={salvando}>{salvando ? 'Salvando...' : 'Salvar'}</button>
+          <button type="button" onClick={onFechar} disabled={ocupado}>Cancelar</button>
+          <button type="submit" disabled={ocupado || novoProjetoAberto}>{salvando ? 'Salvando...' : 'Salvar'}</button>
         </div>
       </form>
     </div>
