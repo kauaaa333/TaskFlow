@@ -1,4 +1,4 @@
-/* Container do item da tarefa */
+
 .tarefa {
   display: flex !important;
   flex-direction: column !important;
@@ -28,14 +28,12 @@
 .tarefa.baixissima { border-left: 4px solid #64748b; }
 .responsavel { color: var(--text-dim); font-size: 0.8rem; }
 
-/* Área de conteúdo do card */
 .conteudo {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-/* Texto da tarefa (ocupa o espaço livre) */
 .textoTarefa {
   color: var(--text);
   word-break: break-word;
@@ -43,7 +41,6 @@
   line-height: 1.4;
 }
 
-/* Responsável e prioridade */
 .badges {
   display: flex;
   align-items: center;
@@ -51,7 +48,6 @@
   flex-wrap: wrap;
 }
 
-/* Estilo para quando a tarefa está concluída */
 .concluida .textoTarefa,
 .texto-tarefa {
   text-decoration: line-through;
@@ -68,7 +64,6 @@
   flex-shrink: 0;
 }
 
-/* Cores das prioridades em tema escuro */
 .badge-alta {
   background-color: #3a1515;
   color: #ff6b6b;
@@ -99,7 +94,6 @@
   border: 1px solid #334155;
 }
 
-/* Área de botões de ação */
 .acoes {
   display: flex;
   align-items: center;
@@ -109,7 +103,6 @@
   padding-top: 8px;
 }
 
-/* Botões do card */
 .tarefa button {
   background-color: var(--bg-elevated-2);
   color: var(--text);
@@ -136,7 +129,6 @@
   color: #000000 !important;
 }
 
-/* Reseta estilos padrões da lista no Kanban */
 #lista-tarefas,
 .coluna ul {
   list-style: none !important;

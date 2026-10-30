@@ -49,8 +49,6 @@ float snoise(vec2 v) {
 void main() {
     vec2 st = gl_FragCoord.xy / u_resolution.xy;
     st.x *= u_resolution.x / u_resolution.y;
-
-    // Ondas fluidas roxas suaves operando no tempo
     float wave1 = sin(st.x * 2.8 + u_time * 0.4) * 0.5 + 0.5;
     float wave2 = cos(st.y * 3.2 - u_time * 0.35) * 0.5 + 0.5;
 
@@ -64,8 +62,6 @@ void main() {
     vec3 color = mix(u_color1, u_color2, clamp(n * 2.2 + wave1 * 0.3, 0.0, 1.0));
     color = mix(color, u_color3, clamp(pow(n, 2.0) * 2.2 + wave2 * 0.2, 0.0, 1.0));
     color = mix(color, u_color4, clamp(pow(n, 4.0) * 1.6, 0.0, 1.0));
-
-    // Suave vinheta escura nas bordas
     float dist = length((gl_FragCoord.xy / u_resolution.xy) - vec2(0.5));
     color *= (1.0 - dist * 0.45);
 
@@ -162,18 +158,16 @@ function ShaderBackground({ theme }) {
 
       gl.uniform2f(resolutionLoc, canvas.width, canvas.height);
       gl.uniform1f(timeLoc, currentTime);
-
-      // Cores de acordo com o tema
       if (theme === "dark") {
-        gl.uniform3f(color1Loc, 0.0, 0.0, 0.0); // Preto absoluto
-        gl.uniform3f(color2Loc, 0.05, 0.05, 0.05); // Cinza bem escuro
-        gl.uniform3f(color3Loc, 0.1, 0.1, 0.1); // Cinza carvão
-        gl.uniform3f(color4Loc, 0.15, 0.15, 0.15); // Cinza médio/prata
+        gl.uniform3f(color1Loc, 0.0, 0.0, 0.0);
+        gl.uniform3f(color2Loc, 0.05, 0.05, 0.05);
+        gl.uniform3f(color3Loc, 0.1, 0.1, 0.1);
+        gl.uniform3f(color4Loc, 0.15, 0.15, 0.15);
       } else {
-        gl.uniform3f(color1Loc, 0.98, 0.98, 0.98); // Branco gelo
-        gl.uniform3f(color2Loc, 0.94, 0.94, 0.94); // Cinza clarinho
-        gl.uniform3f(color3Loc, 0.9, 0.9, 0.9); // Prata claro
-        gl.uniform3f(color4Loc, 1.0, 1.0, 1.0); // Branco absoluto
+        gl.uniform3f(color1Loc, 0.98, 0.98, 0.98);
+        gl.uniform3f(color2Loc, 0.94, 0.94, 0.94);
+        gl.uniform3f(color3Loc, 0.9, 0.9, 0.9);
+        gl.uniform3f(color4Loc, 1.0, 1.0, 1.0);
       }
 
       gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -187,7 +181,7 @@ function ShaderBackground({ theme }) {
       window.removeEventListener("resize", resize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [theme]); // recria/re-renderiza o shader ou ao menos usa o novo closure quando o theme muda
+  }, [theme]);
 
   return <canvas ref={canvasRef} className={styles.shaderCanvas} />;
 }

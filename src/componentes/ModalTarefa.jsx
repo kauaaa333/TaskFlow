@@ -10,8 +10,7 @@ function paraNumero(valor) {
 
 function ModalTarefa({ aberto, onFechar, onSalvar, onCriarProjeto, tarefa = null, coluna = 'afazer', prioridades, usuarios, projetos }) {
   const { usuario } = useAuth();
-  // O Dashboard monta um formulário novo a cada abertura. Atualizar a lista de
-  // projetos não pode reinicializar os dados já digitados na tarefa.
+  // Atualizar os projetos não deve apagar os dados da tarefa em edição.
   const responsavelInicial = tarefa ? tarefa.usuarioId ?? '' : usuario?.id || usuarios[0]?.id || '';
   const [texto, setTexto] = useState(tarefa?.texto ?? '');
   const [idUsuario, setIdUsuario] = useState(responsavelInicial);
@@ -70,13 +69,12 @@ function ModalTarefa({ aberto, onFechar, onSalvar, onCriarProjeto, tarefa = null
     }
   }
 
-  // Só prioridades ativas; na edição, mantém a atual mesmo que tenha sido desativada
+  // Na edição, preserva a prioridade atual mesmo se estiver inativa.
   const opcoesPrioridade = prioridades;
   const projetosDoResponsavel = projetos.filter((p) => p.usuarioId === Number(idUsuario)
     || (tarefa && p.id === tarefa.projetoId && Number(idUsuario) === tarefa.usuarioId));
   const prioridadeAtualInativa = tarefa && !prioridades.some((p) => p.id === tarefa.idprioridade);
-  // Se a escolhida não está nas opções (ex.: 'media' desativada), usa a ativa mais próxima do padrão:
-  // o que aparece no select é sempre o que é enviado
+  // Se a opção não existir mais, seleciona a prioridade ativa mais próxima.
   const valorPrioridade = prioridadeAtualInativa && Number(idprioridade) === tarefa.idprioridade
     ? idprioridade : opcoesPrioridade.some((p) => p.id === Number(idprioridade))
     ? idprioridade

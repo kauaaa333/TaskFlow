@@ -212,9 +212,7 @@
   text-align: center;
   margin-bottom: 15px;
 }
-/* --- ESTILOS DO CEP E CIDADE (TEMA PRETO E ROXO) --- */
 
-/* Campo de Input do CEP */
 #input-cep {
   background-color: transparent;
   color: var(--text);
@@ -236,7 +234,6 @@
   color: var(--text-faint);
 }
 
-/* Tag/Badge da Cidade na lista de tarefas */
 .badge-cidade {
   display: inline-flex;
   align-items: center;
@@ -251,7 +248,6 @@
   font-weight: 500;
 }
 
-/* Mensagem de Erro Monocromática */
 .mensagem-erro {
   color: #f43f5e;
   background-color: rgba(244, 63, 94, 0.1);
@@ -262,8 +258,6 @@
   margin-top: 8px;
   display: inline-block;
 }
-
-/* --- COLUNAS KANBAN --- */
 
 .kanban {
   display: flex;
@@ -284,7 +278,6 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
-/* Estilo e visibilidade do título h2 */
 .coluna h2 {
   color: var(--text) !important;
   font-size: 1.05rem;
@@ -297,7 +290,6 @@
   text-align: center;
 }
 
-/* Espaçamento superior do formulário */
 #formulario {
   margin-top: 25px;
   display: flex;
@@ -366,7 +358,6 @@
   transform: translateY(-1px);
 }
 
-/* --- ALINHAMENTO DAS TAREFAS/CARDS (CONTEÚDO HORIZONTAL) --- */
 .tarefa, .card-item {
   display: flex;
   align-items: center;
@@ -379,7 +370,6 @@
   margin-bottom: 10px;
 }
 
-/* Agrupa checkbox, texto e badge na esquerda */
 .tarefa-conteudo {
   display: flex;
   align-items: center;
@@ -387,14 +377,12 @@
   flex: 1;
 }
 
-/* Agrupa os botões de ação na direita */
 .tarefa-acoes {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-/* Ajuste responsivo para telas menores */
 @media (max-width: 768px) {
   .kanban {
     flex-direction: column;
