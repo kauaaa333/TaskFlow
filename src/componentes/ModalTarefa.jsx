@@ -14,6 +14,7 @@ function ModalTarefa({ visitante, aberto, onFechar, onSalvar, onCriarProjeto, ta
   // Atualizar os projetos não deve apagar os dados da tarefa em edição.
   const responsavelInicial = tarefa ? tarefa.usuarioId ?? '' : usuario?.id || usuarios[0]?.id || '';
   const [texto, setTexto] = useState(tarefa?.texto ?? '');
+  const [erroTexto, setErroTexto] = useState('');
   const [idUsuario, setIdUsuario] = useState(responsavelInicial);
   const [idProjeto, setIdProjeto] = useState(tarefa ? tarefa.projetoId ?? ''
     : projetos.find((p) => p.usuarioId === Number(responsavelInicial))?.id ?? '');
@@ -86,6 +87,11 @@ function ModalTarefa({ visitante, aberto, onFechar, onSalvar, onCriarProjeto, ta
     if (ocupado || novoProjetoAberto) return;
 
     setErros([]);
+    if (!texto.trim()) {
+      setErroTexto('Descreva a tarefa antes de salvar.');
+      event.currentTarget.elements.namedItem('tarefa-texto')?.focus();
+      return;
+    }
     setSalvando(true);
     try {
       await onSalvar({
@@ -114,7 +120,11 @@ function ModalTarefa({ visitante, aberto, onFechar, onSalvar, onCriarProjeto, ta
         <h2 id="titulo-modal-tarefa">{tarefa ? 'Editar tarefa' : 'Nova tarefa'}</h2>
         <div className={styles.campo}>
           <label htmlFor="tarefa-texto">Tarefa</label>
-          <input id="tarefa-texto" placeholder="Descreva a tarefa" value={texto} onChange={(event) => setTexto(event.target.value)} disabled={ocupado} autoFocus />
+          <input id="tarefa-texto" name="tarefa-texto" placeholder="Descreva a tarefa" value={texto} onChange={(event) => {
+            setTexto(event.target.value);
+            if (event.target.value.trim()) setErroTexto('');
+          }} aria-required="true" aria-invalid={Boolean(erroTexto)} aria-describedby={erroTexto ? 'erro-tarefa-texto' : undefined} disabled={ocupado} autoFocus />
+          {erroTexto && <small id="erro-tarefa-texto" role="alert" className={styles.erros}>{erroTexto}</small>}
         </div>
         <div className={styles.campo}>
           <label htmlFor="tarefa-responsavel">Responsável</label>
