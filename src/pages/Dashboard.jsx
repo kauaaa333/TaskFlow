@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import api, { mensagensDeErro } from '../api';
+import { Link } from 'react-router-dom';
+import { apiVisitante } from '../visitante';
+import apiConta, { mensagensDeErro } from '../api';
 import Header from '../componentes/Header';
 import ListaTarefas from '../componentes/ListaTarefas';
 import ModalTarefa from '../componentes/ModalTarefa';
@@ -10,7 +12,8 @@ import { useAuth } from '../contexts/useAuth';
 import { filtrarTarefas, contarTarefas } from '../filtrosTarefas';
 import { colunasKanban, persistirMovimento, podeMover } from '../movimentacao';
 
-function Dashboard({ theme, onToggleTheme }) {
+function Dashboard({ theme, onToggleTheme, visitante = false }) {
+  const api = visitante ? apiVisitante : apiConta;
   const { usuario } = useAuth();
   const [tarefas, setTarefas] = useState([]);
   const [prioridades, setPrioridades] = useState([]);
@@ -69,7 +72,7 @@ function Dashboard({ theme, onToggleTheme }) {
     }
     carregarTarefas();
     return () => { ativo = false; };
-  }, []);
+  }, [api]);
 
   useEffect(() => {
     document.title = pendentes > 0 ? `(${pendentes}) TaskFlow` : 'TaskFlow';
@@ -191,6 +194,7 @@ function Dashboard({ theme, onToggleTheme }) {
     <>
       <Header titulo="TaskFlow" subtitulo="Gerencie suas tarefas" total={total} pendentes={pendentes} emAndamento={emAndamento} concluidas={concluidas} theme={theme} onToggleTheme={onToggleTheme} />
       <div className="container dashboard-container">
+        {visitante && <p className="kanban-dica">Modo visitante: tarefas salvas só neste navegador. <Link to="/login">Voltar ao login</Link></p>}
         <div className="filtros-tarefas">
         <div className="filtro-prioridade">
           <label htmlFor="filtro-prioridade">Filtrar por prioridade:</label>
@@ -243,7 +247,7 @@ function Dashboard({ theme, onToggleTheme }) {
           </div>
         )}
       </div>
-      {modalAberto && <ModalTarefa aberto onFechar={() => setModalAberto(false)} onSalvar={salvarTarefa} onCriarProjeto={criarProjeto} tarefa={tarefaEditando} coluna={colunaAtiva} prioridades={prioridades} usuarios={usuarios} projetos={projetos} />}
+      {modalAberto && <ModalTarefa visitante={visitante} aberto onFechar={() => setModalAberto(false)} onSalvar={salvarTarefa} onCriarProjeto={criarProjeto} tarefa={tarefaEditando} coluna={colunaAtiva} prioridades={prioridades} usuarios={usuarios} projetos={projetos} />}
       <ModalExcluirTarefa tarefa={tarefaParaExcluir} excluindo={excluindo} erro={erro} onCancelar={() => { if (!excluindo) setTarefaParaExcluir(null); }} onConfirmar={confirmarExclusao} />
     </>
   );

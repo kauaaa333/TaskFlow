@@ -15,6 +15,7 @@ function AppRoutes({ theme, toggleTheme }) {
           </RotaPrivada>
         }
       />
+      <Route path='/visitante' element={<Dashboard key="visitante" visitante theme={theme} onToggleTheme={toggleTheme} />} />
       <Route path='/sobre' element={<Sobre />} />
       <Route path='/login' element={<Login />} />
     </Routes>

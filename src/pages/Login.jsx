@@ -64,6 +64,8 @@ function Login() {
         {erro && <p className="login-erro" role="alert">{erro}</p>}
 
         <button className="login-btn" type="submit" disabled={enviando}>{enviando ? 'Entrando...' : 'Entrar'}</button>
+        <button className="login-btn" type="button" disabled={enviando} onClick={() => navigate('/visitante')}>Entrar sem conta</button>
+        <p className="login-aviso">No modo visitante, suas tarefas ficam só neste navegador.</p>
         <p className="login-aviso">Use sua conta cadastrada. Para solicitar acesso, procure o administrador.</p>
       </form>
     </div>

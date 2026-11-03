@@ -8,8 +8,9 @@ function paraNumero(valor) {
   return valor === '' || valor == null ? null : Number(valor);
 }
 
-function ModalTarefa({ aberto, onFechar, onSalvar, onCriarProjeto, tarefa = null, coluna = 'afazer', prioridades, usuarios, projetos }) {
-  const { usuario } = useAuth();
+function ModalTarefa({ visitante, aberto, onFechar, onSalvar, onCriarProjeto, tarefa = null, coluna = 'afazer', prioridades, usuarios, projetos }) {
+  const { usuario: usuarioConta } = useAuth();
+  const usuario = visitante ? usuarios[0] : usuarioConta;
   // Atualizar os projetos não deve apagar os dados da tarefa em edição.
   const responsavelInicial = tarefa ? tarefa.usuarioId ?? '' : usuario?.id || usuarios[0]?.id || '';
   const [texto, setTexto] = useState(tarefa?.texto ?? '');
