@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import api, { mensagensDeErro } from '../api';
 import Header from '../componentes/Header';
 import ListaTarefas from '../componentes/ListaTarefas';
@@ -8,6 +8,7 @@ import { cadastrarProjeto } from '../projetos';
 import { ordenarPorImportancia, rotuloPrioridade } from '../prioridades';
 import { useAuth } from '../contexts/useAuth';
 import { filtrarTarefas, contarTarefas } from '../filtrosTarefas';
+import { colunasKanban, persistirMovimento, podeMover } from '../movimentacao';
 
 function Dashboard({ theme, onToggleTheme }) {
   const { usuario } = useAuth();
@@ -28,6 +29,11 @@ function Dashboard({ theme, onToggleTheme }) {
   const [filtroUsuario, setFiltroUsuario] = useState('todos');
   const [tarefaParaExcluir, setTarefaParaExcluir] = useState(null);
   const [excluindo, setExcluindo] = useState(false);
+  const tarefaArrastada = useRef(null);
+  const movimentoEmCurso = useRef(false);
+  const [movimentando, setMovimentando] = useState(false);
+  const [destinoArraste, setDestinoArraste] = useState(null);
+  const [avisoMovimento, setAvisoMovimento] = useState('');
 
   const tarefasFiltradas = filtrarTarefas(tarefas, {
     prioridade: filtroPrioridade, usuarioId: filtroUsuario, administrador,
@@ -124,26 +130,62 @@ function Dashboard({ theme, onToggleTheme }) {
   }
 
   async function moverTarefa(id, novaColuna) {
+    const tarefa = tarefas.find(t => t.id === id);
+    if (movimentoEmCurso.current || !podeMover(tarefa, novaColuna)) return;
+    movimentoEmCurso.current = true;
+    setMovimentando(true);
     setErro('');
+    setAvisoMovimento('Salvando movimentação…');
 
     try {
-      const { data: tarefaMovida } = await api.put(`/tarefas/${id}`, { coluna: novaColuna });
+      const tarefaMovida = await persistirMovimento(api, tarefa, novaColuna);
       setTarefas((atuais) => atuais.map((t) => (t.id === id ? tarefaMovida : t)));
+      setAvisoMovimento(`Tarefa movida para ${colunasKanban.find(c => c.id === novaColuna).titulo}.`);
     } catch (e) {
+      setAvisoMovimento('');
       setErro(mensagensDeErro(e).join('\n'));
       console.error(e);
+    } finally {
+      movimentoEmCurso.current = false;
+      setMovimentando(false);
     }
+  }
+
+  function iniciarArraste(event, id) {
+    if (movimentoEmCurso.current || event.target.closest('button, select')) {
+      event.preventDefault();
+      return;
+    }
+    tarefaArrastada.current = id;
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', String(id));
+  }
+
+  function encerrarArraste() {
+    tarefaArrastada.current = null;
+    setDestinoArraste(null);
+  }
+
+  function sobreColuna(event, destino) {
+    const tarefa = tarefas.find(t => t.id === tarefaArrastada.current);
+    if (!movimentoEmCurso.current && podeMover(tarefa, destino)) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      setDestinoArraste(destino);
+    }
+  }
+
+  function soltarNaColuna(event, destino) {
+    const id = tarefaArrastada.current;
+    if (id === null) return;
+    event.preventDefault();
+    encerrarArraste();
+    if (event.dataTransfer.getData('text/plain') === String(id)) moverTarefa(id, destino);
   }
 
   const prioridadePorId = Object.fromEntries(prioridades.map((p) => [p.id, p]));
   const usuarioPorId = Object.fromEntries(usuarios.map((u) => [u.id, u]));
   const projetoPorId = Object.fromEntries(projetos.map((p) => [p.id, p]));
-
-  const colunas = [
-    { id: 'afazer', titulo: 'A Fazer', proxima: 'andamento' },
-    { id: 'andamento', titulo: 'Em Andamento', anterior: 'afazer', proxima: 'concluido' },
-    { id: 'concluido', titulo: 'Concluído', anterior: 'andamento' },
-  ];
 
   return (
     <>
@@ -173,14 +215,20 @@ function Dashboard({ theme, onToggleTheme }) {
         {carregando && (<p style={{ textAlign: 'center', color: 'var(--text-dim)', padding: '2rem' }}>Carregando tarefas...</p>)}
         
         {erro && (<p role="alert" style={{ textAlign: 'center', color: 'var(--danger)', padding: '2rem' }}>{erro}</p>)}
+        <p className="kanban-dica" role="status">{avisoMovimento || 'Arraste uma tarefa para outra coluna ou use “Mover para…” no cartão.'}</p>
 
         {!carregando && !falhaCarregamento && (
           <div className="kanban">
-            {colunas.map((coluna) => {
+            {colunasKanban.map((coluna) => {
               const tarefasVisiveis = tarefasFiltradas.filter((tarefa) => tarefa.coluna === coluna.id);
 
               return (
-                <div className="coluna" key={coluna.id}>
+                <div className={`coluna${destinoArraste === coluna.id ? ' coluna-destino' : ''}`} key={coluna.id}
+                  onDragOver={event => sobreColuna(event, coluna.id)}
+                  onDragLeave={event => {
+                    if (!event.currentTarget.contains(event.relatedTarget)) setDestinoArraste(atual => atual === coluna.id ? null : atual);
+                  }}
+                  onDrop={event => soltarNaColuna(event, coluna.id)}>
                   <div className="kanban-coluna-header">
                     <h2>{coluna.titulo}</h2>
                     <div className="kanban-coluna-controles">
@@ -188,7 +236,7 @@ function Dashboard({ theme, onToggleTheme }) {
                       <button className="kanban-btn-add" type="button" onClick={() => abrirModalCriar(coluna.id)} aria-label={`Adicionar tarefa em ${coluna.titulo}`}>+</button>
                     </div>
                   </div>
-                  <ListaTarefas tarefas={tarefasVisiveis} prioridadePorId={prioridadePorId} usuarioPorId={usuarioPorId} projetoPorId={projetoPorId} onDeletar={deletarTarefa} onEditar={abrirModalEditar} moverTarefa={moverTarefa} />
+                  <ListaTarefas tarefas={tarefasVisiveis} prioridadePorId={prioridadePorId} usuarioPorId={usuarioPorId} projetoPorId={projetoPorId} onDeletar={deletarTarefa} onEditar={abrirModalEditar} moverTarefa={moverTarefa} iniciarArraste={iniciarArraste} encerrarArraste={encerrarArraste} movimentando={movimentando} />
                 </div>
               );
             })}

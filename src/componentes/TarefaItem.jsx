@@ -1,11 +1,15 @@
 import styles from "./TarefaItem.module.css";
 import { rotuloPrioridade } from "../prioridades";
+import { colunasKanban } from "../movimentacao";
 
 function TarefaItem({
   id,
   texto,
   coluna,
   moverTarefa,
+  iniciarArraste,
+  encerrarArraste,
+  movimentando,
   prioridade,
   corPrioridade,
   responsavel,
@@ -26,7 +30,8 @@ function TarefaItem({
   const classePrioridade = styles["badge-prioridade"];
 
   return (
-    <li className={classeItem} style={{ "--cor-prioridade": cor }} aria-label={`Tarefa: ${texto}`}>
+    <li className={classeItem} style={{ "--cor-prioridade": cor }} aria-label={`Tarefa: ${texto}`}
+      draggable={!movimentando} onDragStart={event => iniciarArraste(event, id)} onDragEnd={encerrarArraste}>
       <div className={styles.conteudo}>
         <span className={classeTexto} onDoubleClick={onEditar} title="Duplo clique para editar">
           {texto}
@@ -42,27 +47,11 @@ function TarefaItem({
 
       <div className={styles.acoes}>
         <button onClick={onEditar} title="Editar tarefa" aria-label={`Editar ${texto}`}>Editar</button>
-        {coluna !== "afazer" && (
-          <button
-            onClick={() =>
-              moverTarefa(id, coluna === "concluido" ? "andamento" : "afazer")
-            }
-            title="Mover para esquerda"
-          >
-            ←
-          </button>
-        )}
-
-        {coluna !== "concluido" && (
-          <button
-            onClick={() =>
-              moverTarefa(id, coluna === "afazer" ? "andamento" : "concluido")
-            }
-            title="Mover para direita"
-          >
-            →
-          </button>
-        )}
+        <select className={styles.mover} aria-label={`Mover ${texto} para outra coluna`}
+          value="" disabled={movimentando} onChange={event => moverTarefa(id, event.target.value)}>
+          <option value="" disabled>Mover para…</option>
+          {colunasKanban.filter(c => c.id !== coluna).map(c => <option key={c.id} value={c.id}>{c.titulo}</option>)}
+        </select>
 
         <button className={styles.btnDeletar} onClick={onDeletar} title="Excluir tarefa">
           X

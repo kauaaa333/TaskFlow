@@ -23,6 +23,10 @@
   box-shadow: 0 4px 16px var(--border);
 }
 
+.tarefa[draggable="true"] { cursor: grab; }
+.tarefa[draggable="true"]:active { cursor: grabbing; }
+.mover { color: var(--text); background: var(--bg-elevated-2); border: 1px solid var(--border); border-radius: 4px; padding: 4px; max-width: 100%; }
+
 .responsavel { color: var(--text-dim); font-size: 0.8rem; }
 
 .conteudo {
@@ -96,6 +100,7 @@
 
 .acoes {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 6px;

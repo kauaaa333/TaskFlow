@@ -1,6 +1,6 @@
 import TarefaItem from './TarefaItem';
 
-function ListaTarefas({ tarefas, prioridadePorId = {}, usuarioPorId = {}, projetoPorId = {}, onDeletar, onEditar, moverTarefa }) {
+function ListaTarefas({ tarefas, prioridadePorId = {}, usuarioPorId = {}, projetoPorId = {}, onDeletar, onEditar, moverTarefa, iniciarArraste, encerrarArraste, movimentando }) {
   return (
     <section id='lista-section'>
       {/* Mensagem quando nao ha tarefas */}
@@ -22,6 +22,9 @@ function ListaTarefas({ tarefas, prioridadePorId = {}, usuarioPorId = {}, projet
               responsavel={tarefa.usuario ?? usuarioPorId[tarefa.usuarioId]?.nome}
               projeto={tarefa.projeto ?? projetoPorId[tarefa.projetoId]?.nome}
               moverTarefa={moverTarefa}
+              iniciarArraste={iniciarArraste}
+              encerrarArraste={encerrarArraste}
+              movimentando={movimentando}
               id={tarefa.id}
               onDeletar={() => onDeletar(tarefa.id)}
               onEditar={() => onEditar(tarefa)}

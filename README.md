@@ -18,7 +18,7 @@ A API de desenvolvimento padrão é `http://localhost:3001`. Para outro endereç
 ## Funcionalidades
 
 - Login com conta cadastrada.
-- Criação, edição, movimentação e exclusão de tarefas.
+- Criação, edição e exclusão de tarefas. Para mover, arraste o cartão para outra coluna ou use “Mover para…”.
 - Cadastro de projetos no formulário da tarefa.
 - Prioridades e filtros do quadro.
 - Filtro por usuário para administradores.
