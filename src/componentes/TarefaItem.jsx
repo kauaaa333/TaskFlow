@@ -7,6 +7,7 @@ function TarefaItem({
   coluna,
   moverTarefa,
   prioridade,
+  corPrioridade,
   responsavel,
   projeto,
   onDeletar,
@@ -14,19 +15,18 @@ function TarefaItem({
 }) {
   const isConcluida = coluna === "concluido";
 
-  const classeItem =
-    (isConcluida ? styles.tarefa + " " + styles.concluida : styles.tarefa) +
-    (styles[prioridade] ? " " + styles[prioridade] : "");
+  const classeItem = isConcluida ? styles.tarefa + " " + styles.concluida : styles.tarefa;
+  const cor = typeof corPrioridade === "string" && /^#[0-9a-f]{6}$/i.test(corPrioridade)
+    ? corPrioridade : "#94A3B8";
 
   const classeTexto = isConcluida
     ? styles.textoTarefa + " " + styles["texto-tarefa"]
     : styles.textoTarefa;
 
-  const classePrioridade =
-    styles["badge-prioridade"] + " " + styles["badge-" + prioridade];
+  const classePrioridade = styles["badge-prioridade"];
 
   return (
-    <li className={classeItem} aria-label={`Tarefa: ${texto}`}>
+    <li className={classeItem} style={{ "--cor-prioridade": cor }} aria-label={`Tarefa: ${texto}`}>
       <div className={styles.conteudo}>
         <span className={classeTexto} onDoubleClick={onEditar} title="Duplo clique para editar">
           {texto}

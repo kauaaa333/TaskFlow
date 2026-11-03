@@ -17,6 +17,7 @@ function ListaTarefas({ tarefas, prioridadePorId = {}, usuarioPorId = {}, projet
               key={tarefa.id}
               texto={tarefa.texto}
               prioridade={prioridadePorId[tarefa.idprioridade]?.descricao}
+              corPrioridade={prioridadePorId[tarefa.idprioridade]?.cor ?? tarefa.prioridadeCor}
               coluna={tarefa.coluna}
               responsavel={tarefa.usuario ?? usuarioPorId[tarefa.usuarioId]?.nome}
               projeto={tarefa.projeto ?? projetoPorId[tarefa.projetoId]?.nome}
