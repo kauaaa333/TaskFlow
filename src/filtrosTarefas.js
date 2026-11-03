@@ -8,6 +8,7 @@ export function contarTarefas(tarefas) {
   return {
     total: tarefas.length,
     pendentes: tarefas.filter(t => t.coluna === 'afazer').length,
+    emAndamento: tarefas.filter(t => t.coluna === 'andamento').length,
     concluidas: tarefas.filter(t => t.coluna === 'concluido').length,
   };
 }

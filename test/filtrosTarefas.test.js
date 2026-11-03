@@ -17,8 +17,9 @@ test('Selecionar usuário restringe todas as colunas e combina com prioridade', 
   assert.deepEqual(filtrarTarefas(tarefas, { administrador: true, usuarioId: '1', prioridade: '4' }).map(t => t.id), [1]);
 });
 test('Contadores correspondem aos registros visíveis, incluindo resultado vazio', () => {
-  assert.deepEqual(contarTarefas(filtrarTarefas(tarefas, { administrador: true, usuarioId: '1' })), { total: 2, pendentes: 1, concluidas: 1 });
-  assert.deepEqual(contarTarefas(filtrarTarefas(tarefas, { administrador: true, usuarioId: '99' })), { total: 0, pendentes: 0, concluidas: 0 });
+  assert.deepEqual(contarTarefas(filtrarTarefas(tarefas, { administrador: true, usuarioId: '1' })), { total: 2, pendentes: 1, emAndamento: 0, concluidas: 1 });
+  assert.deepEqual(contarTarefas(filtrarTarefas(tarefas, { administrador: true, prioridade: '4' })), { total: 2, pendentes: 1, emAndamento: 1, concluidas: 0 });
+  assert.deepEqual(contarTarefas(filtrarTarefas(tarefas, { administrador: true, usuarioId: '99' })), { total: 0, pendentes: 0, emAndamento: 0, concluidas: 0 });
 });
 test('Retornar a todos mantém o filtro de prioridade e não altera os dados originais', () => {
   assert.deepEqual(filtrarTarefas(tarefas, { administrador: true, usuarioId: 'todos', prioridade: '4' }).map(t => t.id), [1, 2]);

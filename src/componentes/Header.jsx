@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import styles from './Header.module.css';
 
-function Header({titulo, subtitulo = "Informe o subtítulo", total , pendentes , concluidas, theme, onToggleTheme }) {
+function Header({ titulo, subtitulo = "Informe o subtítulo", total, pendentes, emAndamento, concluidas, theme, onToggleTheme }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
@@ -28,11 +28,14 @@ function Header({titulo, subtitulo = "Informe o subtítulo", total , pendentes ,
 
           <div className={styles.controls}>
             <div id="contadores">
-              <span id="cont-total">{total} tarefas</span>
-              <span className="separador">·</span>
-              <span id="cont-pendentes">{pendentes} pendentes</span>
-              <span className="separador">·</span>
-              <span id="cont-concluidas">{concluidas} concluídas</span>
+              <div className="contadores-status">
+                <span id="cont-pendentes">{pendentes} {pendentes === 1 ? 'tarefa pendente' : 'tarefas pendentes'}</span>
+                <span className="separador" aria-hidden="true">·</span>
+                <span id="cont-andamento">{emAndamento} {emAndamento === 1 ? 'tarefa' : 'tarefas'} em andamento</span>
+                <span className="separador" aria-hidden="true">·</span>
+                <span id="cont-concluidas">{concluidas} {concluidas === 1 ? 'tarefa concluída' : 'tarefas concluídas'}</span>
+              </div>
+              <span id="cont-total">Total: {total} {total === 1 ? 'tarefa' : 'tarefas'}</span>
             </div>
             
             <button 

@@ -38,7 +38,7 @@ function Dashboard({ theme, onToggleTheme }) {
   const tarefasFiltradas = filtrarTarefas(tarefas, {
     prioridade: filtroPrioridade, usuarioId: filtroUsuario, administrador,
   });
-  const { total, pendentes, concluidas } = contarTarefas(tarefasFiltradas);
+  const { total, pendentes, emAndamento, concluidas } = contarTarefas(tarefasFiltradas);
 
   useEffect(() => {
     let ativo = true;
@@ -189,7 +189,7 @@ function Dashboard({ theme, onToggleTheme }) {
 
   return (
     <>
-      <Header titulo="TaskFlow" subtitulo="Gerencie suas tarefas" total={total} pendentes={pendentes} concluidas={concluidas} theme={theme} onToggleTheme={onToggleTheme} />
+      <Header titulo="TaskFlow" subtitulo="Gerencie suas tarefas" total={total} pendentes={pendentes} emAndamento={emAndamento} concluidas={concluidas} theme={theme} onToggleTheme={onToggleTheme} />
       <div className="container dashboard-container">
         <div className="filtros-tarefas">
         <div className="filtro-prioridade">
